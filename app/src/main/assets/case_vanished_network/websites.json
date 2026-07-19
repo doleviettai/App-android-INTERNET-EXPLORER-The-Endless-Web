@@ -1,0 +1,74 @@
+[
+  {
+    "id": "site_portfolio",
+    "layoutType": "company_portfolio",
+    "organizationId": "org_aetherlink",
+    "url": "aetherlink.systems (đã lưu trữ - snapshot 2087)",
+    "content": {
+      "heroTitle": "Aetherlink Systems",
+      "heroTagline": "Định hình lại giới hạn của trí tuệ nhân tạo.",
+      "aboutSection": "Thành lập năm 2081 bởi Marcus Webb và Lena Torres, Aetherlink Systems là công ty tiên phong trong nghiên cứu AI ứng dụng.",
+      "teamSection": [
+        { "name": "Marcus Webb", "title": "Nhà sáng lập & CEO" },
+        { "name": "Lena Torres", "title": "Kỹ sư trưởng", "npcId": "npc_0042" }
+      ],
+      "projectsSection": [
+        { "name": "Project Absolom", "status": "Bảo mật - không công khai" }
+      ],
+      "footerNote": "Trang này không còn được cập nhật kể từ 03/2087."
+    },
+    "revealedFactIds": ["fact_001", "fact_003"]
+  },
+  {
+    "id": "site_wiki",
+    "layoutType": "wiki_archive",
+    "organizationId": "org_aetherlink",
+    "url": "archive.netwiki/Aetherlink_Systems",
+    "content": {
+      "title": "Aetherlink Systems",
+      "infobox": {
+        "Thành lập": "2081",
+        "Trụ sở": "Khu công nghệ Vành đai 7",
+        "Số nhân viên (đỉnh điểm)": "142",
+        "Tình trạng": "Không còn hoạt động (từ 2087)"
+      },
+      "sections": [
+        { "heading": "Lịch sử", "text": "Aetherlink Systems được thành lập năm 2081, nhanh chóng nổi lên nhờ các hợp đồng AI ứng dụng cho chính quyền khu vực." },
+        { "heading": "Sự biến mất", "text": "Vào tháng 4/2087, toàn bộ nhân sự công ty ngừng liên lạc trong cùng một đêm. Không có báo cáo phá sản, không có thông báo chính thức." },
+        { "heading": "Dự án Absolom", "text": "Nhiều nguồn không chính thức cho rằng công ty đang phát triển một hệ thống có tên 'Project Absolom' trước khi biến mất, nhưng chưa có tài liệu nào được xác minh." }
+      ]
+    },
+    "revealedFactIds": ["fact_002"]
+  },
+  {
+    "id": "site_forum",
+    "layoutType": "forum",
+    "organizationId": "org_aetherlink",
+    "url": "oldnet.forums/thread/847291",
+    "content": {
+      "threadTitle": "Có ai biết chuyện gì thực sự xảy ra với Aetherlink không?",
+      "posts": [
+        { "author": "night_shift_dev", "text": "Tôi từng phỏng vấn ở đó năm 2086. Không khí lúc đó đã kỳ lạ rồi, mọi người nói rất ít về dự án đang làm." },
+        { "author": "anon_9928", "text": "Nghe nói có liên quan đến một vụ truy cập hệ thống bất thường ngay trước khi mọi thứ im bặt." },
+        { "author": "L.T.", "text": "Không phải mọi thứ được viết ra đều đúng. Đừng tin tất cả những gì các bạn đọc ở đây.", "npcId": "npc_0042", "note": "Có khả năng là Lena Torres đăng dưới tên viết tắt" }
+      ]
+    },
+    "revealedFactIds": []
+  },
+  {
+    "id": "site_social",
+    "layoutType": "social_media",
+    "organizationId": "org_aetherlink",
+    "url": "pulse.net/lena.torres",
+    "content": {
+      "profileName": "Lena Torres",
+      "npcId": "npc_0042",
+      "bio": "Kỹ sư trưởng @ Aetherlink Systems. Đam mê hệ thống phân tán.",
+      "posts": [
+        { "date": "2087-04-11", "text": "Làm việc muộn tối nay. Có điều gì đó không ổn với hệ thống." },
+        { "date": "2087-04-11", "text": "Nếu ai đọc được dòng này sau này: tôi không làm điều tôi nghĩ mình sẽ làm." }
+      ]
+    },
+    "revealedFactIds": ["fact_004"]
+  }
+]

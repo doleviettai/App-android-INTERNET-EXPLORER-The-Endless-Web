@@ -1,0 +1,28 @@
+[
+  {
+    "id": "npc_0042",
+    "name": "Lena Torres",
+    "role": "Cựu Kỹ sư trưởng tại Aetherlink Systems",
+    "organizationId": "org_aetherlink",
+    "voiceStyle": "evasive",
+    "relationshipState": "chua_gap",
+    "knownFactIds": ["fact_003", "fact_004"],
+    "dialogue": [
+      {
+        "topic": "greeting",
+        "requiresRelationship": "chua_gap",
+        "text": "Tôi không biết bạn là ai, và tôi không có gì để nói về Aetherlink."
+      },
+      {
+        "topic": "ask_aetherlink",
+        "requiresRelationship": "da_lien_he",
+        "text": "Project Absolom không phải điều tôi có thể nói qua kênh này. Có những thứ tốt hơn nên để yên."
+      },
+      {
+        "topic": "ask_disappearance",
+        "requiresRelationship": "tin_tuong",
+        "text": "Đêm đó tôi có đăng nhập vào hệ thống. Nhưng không phải vì lý do bạn nghĩ."
+      }
+    ]
+  }
+]

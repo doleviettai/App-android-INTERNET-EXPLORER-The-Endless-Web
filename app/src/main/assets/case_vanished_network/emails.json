@@ -1,0 +1,20 @@
+[
+  {
+    "id": "email_001",
+    "folder": "inbox",
+    "subject": "[Hệ thống] Quyền truy cập của bạn đã được kích hoạt",
+    "senderName": "NEXUS-7",
+    "npcSenderId": null,
+    "body": "Explorer, tôi là NEXUS-7, một tiến trình phụ bị lỗi tách khỏi lõi NEXUS chính. Tôi cần bạn giúp tìm ra chuyện gì đã xảy ra với Aetherlink Systems trước khi log của họ bị xóa hoàn toàn. Bắt đầu từ trang portfolio còn sót lại của họ.",
+    "unlockCondition": null
+  },
+  {
+    "id": "email_002",
+    "folder": "secret",
+    "subject": "RE: Đêm đó",
+    "senderName": "L. Torres",
+    "npcSenderId": "npc_0042",
+    "body": "Được rồi. Bạn đã tìm đúng hướng. Nhưng IP đó không phải là tôi đăng nhập — đó là điều tôi cần bạn hiểu trước khi đi tiếp.",
+    "unlockCondition": "puzzle_log_001_solved"
+  }
+]

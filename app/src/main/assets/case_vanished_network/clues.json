@@ -1,0 +1,10 @@
+[
+  {
+    "id": "clue_0009",
+    "caseId": "case_vanished_network",
+    "description": "IP truy cập lúc 3AM trùng với địa chỉ từng dùng bởi Lena Torres, dù cô đã nghỉ việc 2 tháng trước đó.",
+    "unlockedByPuzzleId": "puzzle_log_001",
+    "relatedEntityId": "npc_0042",
+    "relatedFactIds": ["fact_005"]
+  }
+]

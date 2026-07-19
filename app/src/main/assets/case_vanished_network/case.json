@@ -1,0 +1,20 @@
+{
+  "caseId": "case_vanished_network",
+  "title": "The Vanished Network",
+  "organizationId": "org_aetherlink",
+  "npcIds": ["npc_0042"],
+  "websiteIds": ["site_portfolio", "site_wiki", "site_forum", "site_social"],
+  "puzzleIds": ["puzzle_log_001"],
+  "clueIds": ["clue_0009"],
+  "emailIds": ["email_001", "email_002"],
+  "steps": [
+    { "order": 1, "type": "email",       "refId": "email_001",      "description": "Nhận email nhiệm vụ đầu tiên từ NEXUS-7" },
+    { "order": 2, "type": "website",     "refId": "site_portfolio", "description": "Khám phá trang portfolio cũ của Aetherlink" },
+    { "order": 3, "type": "website",     "refId": "site_wiki",      "description": "Đọc trang wiki lưu trữ về Aetherlink" },
+    { "order": 4, "type": "website",     "refId": "site_forum",     "description": "Đọc thread forum bàn về vụ mất tích" },
+    { "order": 5, "type": "website",     "refId": "site_social",    "description": "Xem lại profile mạng xã hội của Lena Torres" },
+    { "order": 6, "type": "puzzle",      "refId": "puzzle_log_001", "description": "Phân tích access log để tìm bất thường" },
+    { "order": 7, "type": "clue_unlock", "refId": "clue_0009",      "description": "Manh mối clue_0009 được mở khóa sau puzzle" },
+    { "order": 8, "type": "email",       "refId": "email_002",      "description": "Email bí mật từ Lena Torres được mở khóa" }
+  ]
+}

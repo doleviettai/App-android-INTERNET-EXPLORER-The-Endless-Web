@@ -1,0 +1,7 @@
+[
+  { "id": "fact_001", "entityType": "organization", "entityId": "org_aetherlink", "factText": "Aetherlink Systems được thành lập năm 2081 bởi Marcus Webb và Lena Torres.", "sourceEntityId": "site_portfolio" },
+  { "id": "fact_002", "entityType": "organization", "entityId": "org_aetherlink", "factText": "Aetherlink từng phát triển một dự án bí mật mang tên 'Project Absolom'.", "sourceEntityId": "site_wiki" },
+  { "id": "fact_003", "entityType": "npc", "entityId": "npc_0042", "factText": "Lena Torres chính thức nghỉ việc tại Aetherlink 2 tháng trước khi công ty biến mất.", "sourceEntityId": "site_portfolio" },
+  { "id": "fact_004", "entityType": "npc", "entityId": "npc_0042", "factText": "Bài đăng cuối cùng của Lena Torres trên mạng xã hội là đêm trước khi công ty biến mất, nội dung mơ hồ.", "sourceEntityId": "site_social" },
+  { "id": "fact_005", "entityType": "clue", "entityId": "clue_0009", "factText": "Có một lượt đăng nhập bằng tài khoản l.torres lúc 3:04 sáng, sau khi cô đã chính thức nghỉ việc, truy vấn thành công vào dữ liệu Project Absolom bằng quyền override.", "sourceEntityId": "puzzle_log_001" }
+]

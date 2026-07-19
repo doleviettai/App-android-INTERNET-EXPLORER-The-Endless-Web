@@ -1,0 +1,35 @@
+{
+  "id": "puzzle_log_001",
+  "caseId": "case_vanished_network",
+  "type": "log_analysis",
+  "title": "Access Log - Hệ thống nội bộ Aetherlink, đêm 11/04/2087",
+  "logLines": [
+    { "id": "log_line_01", "text": "02:14:03  LOGIN  user=m.webb    ip=10.4.2.18    status=OK",                          "isAnomaly": false },
+    { "id": "log_line_02", "text": "02:15:41  ACCESS door=main_lab  ip=10.4.2.18    status=OK",                          "isAnomaly": false },
+    { "id": "log_line_03", "text": "02:30:09  LOGOUT user=m.webb    ip=10.4.2.18    status=OK",                          "isAnomaly": false },
+    { "id": "log_line_04", "text": "02:45:00  SYSTEM backup_job_started              status=OK",                          "isAnomaly": false },
+    { "id": "log_line_05", "text": "02:59:12  LOGIN  user=guest_442 ip=192.168.5.2  status=FAILED",                       "isAnomaly": false },
+    { "id": "log_line_06", "text": "03:00:01  LOGIN  user=guest_442 ip=192.168.5.2  status=FAILED",                       "isAnomaly": false },
+    {
+      "id": "log_line_07",
+      "text": "03:04:22  LOGIN  user=l.torres  ip=76.221.9.140 status=OK",
+      "isAnomaly": true,
+      "anomalyReason": "Lena Torres đã chính thức nghỉ việc 2 tháng trước (fact_003), nhưng tài khoản vẫn đăng nhập thành công lúc 3 giờ sáng."
+    },
+    { "id": "log_line_08", "text": "03:05:10  ACCESS door=server_room ip=76.221.9.140 status=OK",                       "isAnomaly": false },
+    { "id": "log_line_09", "text": "03:07:55  SYSTEM backup_job_completed            status=OK",                          "isAnomaly": false },
+    { "id": "log_line_10", "text": "03:12:30  QUERY  target=project_absolom_db status=DENIED",                           "isAnomaly": false },
+    { "id": "log_line_11", "text": "03:12:45  QUERY  target=project_absolom_db status=DENIED",                           "isAnomaly": false },
+    {
+      "id": "log_line_12",
+      "text": "03:13:02  QUERY  target=project_absolom_db status=OK method=override",
+      "isAnomaly": true,
+      "anomalyReason": "Hai lần bị từ chối liên tiếp rồi thành công ngay sau đó bằng 'override' cho thấy có ai đó ép truy cập trái phép vào dữ liệu Project Absolom."
+    },
+    { "id": "log_line_13", "text": "03:20:00  LOGOUT user=l.torres  ip=76.221.9.140 status=OK",                          "isAnomaly": false },
+    { "id": "log_line_14", "text": "06:00:00  SYSTEM daily_report_sent               status=OK",                          "isAnomaly": false }
+  ],
+  "correctAnomalyIds": ["log_line_07", "log_line_12"],
+  "unlocksClueId": "clue_0009",
+  "hintText": "So sánh thời gian đăng nhập với thông tin bạn đã biết về Lena Torres. Chú ý các dòng có kết quả bất thường (DENIED rồi OK, hoặc method lạ)."
+}
