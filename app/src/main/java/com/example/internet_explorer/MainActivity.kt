@@ -11,6 +11,7 @@ import com.example.internet_explorer.app.data.repository.GameStateRepository
 import com.example.internet_explorer.app.feature.onboarding.OnboardingPreferences
 import com.example.internet_explorer.app.feature.onboarding.OnboardingScreen
 import com.example.internet_explorer.app.navigation.AppNavGraph
+import com.example.internet_explorer.app.ui.components.BootSequenceScreen
 import com.example.internet_explorer.app.ui.theme.InternetExplorerTheme
 
 class MainActivity : ComponentActivity() {
@@ -20,11 +21,16 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             InternetExplorerTheme {
+                var showBoot by remember { mutableStateOf(true) }
                 var showOnboarding by remember {
                     mutableStateOf(!OnboardingPreferences.hasCompletedOnboarding(applicationContext))
                 }
 
-                if (showOnboarding) {
+                if (showBoot) {
+                    BootSequenceScreen(onFinished = {
+                        showBoot = false
+                    })
+                } else if (showOnboarding) {
                     OnboardingScreen(onFinished = {
                         OnboardingPreferences.setCompleted(applicationContext)
                         showOnboarding = false

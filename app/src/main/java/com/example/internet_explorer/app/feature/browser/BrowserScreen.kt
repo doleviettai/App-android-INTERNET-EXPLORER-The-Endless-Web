@@ -1,15 +1,8 @@
 package com.example.internet_explorer.app.feature.browser
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import com.example.internet_explorer.app.ui.components.TerminalCard
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -27,6 +20,11 @@ import com.example.internet_explorer.app.data.local.PortfolioContent
 import com.example.internet_explorer.app.data.local.SocialContent
 import com.example.internet_explorer.app.data.local.WebsiteContent
 import com.example.internet_explorer.app.data.local.WikiContent
+import com.example.internet_explorer.app.ui.components.AddressBar
+import com.example.internet_explorer.app.ui.components.BracketCard
+import com.example.internet_explorer.app.ui.components.StatusTag
+import com.example.internet_explorer.app.ui.components.TypewriterText
+import com.example.internet_explorer.app.ui.theme.*
 
 @Composable
 fun BrowserScreen(
@@ -36,23 +34,41 @@ fun BrowserScreen(
     LaunchedEffect(entityId) { viewModel.openWebsite(entityId) }
     val uiState by viewModel.uiState.collectAsState()
 
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        contentAlignment = Alignment.TopCenter
+    ) {
         when (val state = uiState) {
-            is BrowserUiState.Loading -> CircularProgressIndicator()
-            is BrowserUiState.NotFound -> Text("404 — Không tìm thấy trang này trong World State.")
+            is BrowserUiState.Loading -> {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = AccentTerminal)
+                }
+            }
+            is BrowserUiState.NotFound -> {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(
+                        text = "ERROR 404: NODE_NOT_FOUND. RETRY.",
+                        color = AccentGlitch,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
             is BrowserUiState.Success -> {
                 Column(
                     Modifier
                         .fillMaxSize()
                         .verticalScroll(rememberScrollState())
-                        .padding(16.dp)
                 ) {
-                    Text(
-                        text = "> ${state.website.url}",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.primary
+                    // Thanh địa chỉ chuẩn GDD
+                    AddressBar(
+                        command = state.website.url,
+                        isVerified = state.website.id == "site_social" || state.website.id == "site_forum"
                     )
-                    Spacer(Modifier.height(12.dp))
+                    Spacer(Modifier.height(16.dp))
+
                     when (val content = state.content) {
                         is WebsiteContent.Portfolio -> PortfolioView(content.data)
                         is WebsiteContent.Wiki -> WikiView(content.data)
@@ -67,56 +83,213 @@ fun BrowserScreen(
 
 @Composable
 private fun PortfolioView(data: PortfolioContent) {
-    Text(data.heroTitle, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-    Text(data.heroTagline, style = MaterialTheme.typography.bodyLarge)
-    Spacer(Modifier.height(16.dp))
-    Text(data.aboutSection, style = MaterialTheme.typography.bodyMedium)
-    Spacer(Modifier.height(16.dp))
-    Text("Đội ngũ", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-    data.teamSection.forEach { member ->
-        Text("• ${member.name} — ${member.title}", style = MaterialTheme.typography.bodyMedium)
+    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        BracketCard(isFocused = true) {
+            Text(
+                text = data.heroTitle,
+                style = MaterialTheme.typography.titleLarge,
+                color = AccentTerminal,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = data.heroTagline,
+                style = MaterialTheme.typography.bodyLarge,
+                color = TextPrimary
+            )
+        }
+
+        Text(
+            text = "> ABOUT_US.DAT",
+            style = MaterialTheme.typography.titleMedium,
+            color = AccentTerminal,
+            fontWeight = FontWeight.Bold
+        )
+        BracketCard {
+            Text(
+                text = data.aboutSection,
+                style = MaterialTheme.typography.bodyLarge,
+                color = TextMutedReadable
+            )
+        }
+
+        Text(
+            text = "> TEAM_DIRECTORY.CFG",
+            style = MaterialTheme.typography.titleMedium,
+            color = AccentTerminal,
+            fontWeight = FontWeight.Bold
+        )
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            data.teamSection.forEach { member ->
+                val isSignal = member.npcId != null // Nếu có NPC liên kết thì là Signal (Ví dụ: Lena Torres)
+                BracketCard(isFocused = isSignal) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = member.name,
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = if (isSignal) TextPrimary else TextNoise,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = member.title,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = TextMutedReadable
+                            )
+                        }
+                        if (isSignal) {
+                            StatusTag(text = "SIGNAL_SOURCE", color = AccentTerminal)
+                        } else {
+                            StatusTag(text = "UNVERIFIED", color = TextMuted)
+                        }
+                    }
+                }
+            }
+        }
+
+        Text(
+            text = "> ACTIVE_PROJECTS.LOG",
+            style = MaterialTheme.typography.titleMedium,
+            color = AccentTerminal,
+            fontWeight = FontWeight.Bold
+        )
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            data.projectsSection.forEach { project ->
+                BracketCard {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = project.name,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = TextPrimary,
+                            fontWeight = FontWeight.Bold
+                        )
+                        // Project Absolom là điểm mấu chốt, đánh dấu đỏ nguy hiểm (AccentGlitch)
+                        StatusTag(
+                            text = project.status.uppercase(),
+                            color = if (project.name.contains("Absolom")) AccentGlitch else AccentAmber
+                        )
+                    }
+                }
+            }
+        }
+
+        Spacer(Modifier.height(10.dp))
+        Text(
+            text = data.footerNote,
+            style = MaterialTheme.typography.labelSmall,
+            color = TextMuted,
+            fontWeight = FontWeight.Bold
+        )
     }
-    Spacer(Modifier.height(16.dp))
-    Text("Dự án", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-    data.projectsSection.forEach { project ->
-        Text("• ${project.name}: ${project.status}", style = MaterialTheme.typography.bodyMedium)
-    }
-    Spacer(Modifier.height(16.dp))
-    Text(data.footerNote, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
 }
 
 @Composable
 private fun WikiView(data: WikiContent) {
-    Text(data.title, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-    Spacer(Modifier.height(12.dp))
-    TerminalCard(Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(12.dp)) {
-            data.infobox.forEach { (key, value) ->
-                Text("$key: $value", style = MaterialTheme.typography.bodySmall)
+    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        Text(
+            text = data.title,
+            style = MaterialTheme.typography.titleLarge,
+            color = AccentTerminal,
+            fontWeight = FontWeight.Bold
+        )
+
+        // Infobox bọc trong BracketCard gọn gàng
+        Text(
+            text = "> META_INFOBOX.DAT",
+            style = MaterialTheme.typography.titleSmall,
+            color = AccentAmber
+        )
+        BracketCard(isFocused = true) {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                data.infobox.forEach { (key, value) ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "$key:",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = TextMutedReadable,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = value,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = TextPrimary,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
             }
         }
-    }
-    Spacer(Modifier.height(16.dp))
-    data.sections.forEach { section ->
-        Text(section.heading, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-        Text(section.text, style = MaterialTheme.typography.bodyMedium)
-        Spacer(Modifier.height(12.dp))
+
+        // Các Section chia nhỏ
+        data.sections.forEachIndexed { index, section ->
+            val sectionNum = (index + 1).toString().padStart(2, '0')
+            Text(
+                text = "== SECTION $sectionNum: ${section.heading.uppercase()} ==",
+                style = MaterialTheme.typography.titleMedium,
+                color = AccentTerminal,
+                fontWeight = FontWeight.Bold
+            )
+            BracketCard {
+                Text(
+                    text = section.text,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = TextMutedReadable
+                )
+            }
+        }
     }
 }
 
 @Composable
 private fun ForumView(data: ForumContent) {
-    Text(data.threadTitle, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-    Spacer(Modifier.height(16.dp))
-    data.posts.forEach { post ->
-        TerminalCard(
-            Modifier
-                .fillMaxWidth()
-                .padding(vertical = 4.dp)
-        ) {
-            Column(Modifier.padding(12.dp)) {
-                Text(post.author, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelLarge)
-                Text(post.text, style = MaterialTheme.typography.bodyMedium)
+    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        Text(
+            text = data.threadTitle,
+            style = MaterialTheme.typography.titleLarge,
+            color = AccentTerminal,
+            fontWeight = FontWeight.Bold
+        )
+        Spacer(Modifier.height(4.dp))
+
+        data.posts.forEach { post ->
+            val isVerified = post.npcId != null // Post của Lena Torres (L.T.) là Signal
+            BracketCard(isFocused = isVerified) {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "USER: ${post.author}",
+                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.labelLarge,
+                            color = if (isVerified) AccentTerminal else TextNoise
+                        )
+                        if (isVerified) {
+                            StatusTag(text = "SIGNAL_CONFIRMED", color = AccentTerminal)
+                        } else {
+                            StatusTag(text = "UNVERIFIED", color = TextMuted)
+                        }
+                    }
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = post.text,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = if (isVerified) TextPrimary else TextMutedReadable
+                    )
+                }
             }
         }
     }
@@ -124,18 +297,67 @@ private fun ForumView(data: ForumContent) {
 
 @Composable
 private fun SocialView(data: SocialContent) {
-    Text(data.profileName, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-    Text(data.bio, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.outline)
-    Spacer(Modifier.height(16.dp))
-    data.posts.forEach { post ->
-        TerminalCard(
-            Modifier
-                .fillMaxWidth()
-                .padding(vertical = 4.dp)
-        ) {
-            Column(Modifier.padding(12.dp)) {
-                Text(post.date, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
-                Text(post.text, style = MaterialTheme.typography.bodyMedium)
+    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        // Profile Header
+        BracketCard(isFocused = true) {
+            Column {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "ACCOUNT: ${data.profileName.uppercase()}",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = AccentTerminal,
+                        fontWeight = FontWeight.Bold
+                    )
+                    StatusTag(text = "SIGNAL_SOURCE", color = AccentTerminal)
+                }
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    text = data.bio,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = TextMutedReadable
+                )
+            }
+        }
+
+        Text(
+            text = "> RECENT_POSTS.LOG",
+            style = MaterialTheme.typography.titleMedium,
+            color = AccentTerminal,
+            fontWeight = FontWeight.Bold
+        )
+
+        data.posts.forEach { post ->
+            BracketCard {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "[TIMESTAMP: ${post.date}]",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = AccentAmber,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "ACCESS: PUBLIC",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = TextMuted
+                        )
+                    }
+                    Spacer(Modifier.height(4.dp))
+                    // Bài viết của nguồn Signal chạy chữ typewriter tạo cảm giác phục hồi dữ liệu trực tiếp
+                    TypewriterText(
+                        text = post.text,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = TextPrimary,
+                        speedMs = 10
+                    )
+                }
             }
         }
     }

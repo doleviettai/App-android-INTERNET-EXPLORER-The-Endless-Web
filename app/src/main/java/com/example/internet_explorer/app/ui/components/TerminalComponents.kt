@@ -1,51 +1,38 @@
 package com.example.internet_explorer.app.ui.components
 
+import android.provider.Settings
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.CardDefaults
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.example.internet_explorer.app.data.repository.GameStateRepository
+import com.example.internet_explorer.app.ui.theme.*
 import kotlinx.coroutines.delay
 
-/**
- * "Cửa sổ terminal" thay cho Card mặc định -- viền màu primary mờ, nền gần trong suốt,
- * không đổ bóng. Dùng thay Card ở mọi nơi để có cảm giác đang nhìn 1 khối dữ liệu hệ thống
- * chứ không phải 1 thẻ Material Design thông thường.
- */
-@Composable
-fun TerminalCard(
-    modifier: Modifier = Modifier,
-    content: @Composable ColumnScope.() -> Unit
-) {
-    OutlinedCard(
-        modifier = modifier,
-        colors = CardDefaults.outlinedCardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-        content = content
-    )
-}
-
-/** Con trỏ nhấp nháy kiểu terminal -- chỉ dùng coroutine delay, không cần thư viện animation. */
+/** Con trỏ nhấp nháy kiểu terminal cổ điển. */
 @Composable
 fun BlinkingCursor(
     modifier: Modifier = Modifier,
-    color: Color = MaterialTheme.colorScheme.primary
+    color: Color = AccentTerminal
 ) {
     var visible by remember { mutableStateOf(true) }
     LaunchedEffect(Unit) {
@@ -58,11 +45,12 @@ fun BlinkingCursor(
         "█",
         color = if (visible) color else Color.Transparent,
         fontFamily = FontFamily.Monospace,
+        fontSize = 12.sp,
         modifier = modifier
     )
 }
 
-/** Lớp phủ vệt quét CRT rất mờ -- chỉ trang trí, không chặn thao tác chạm bên dưới. */
+/** Lớp phủ quét CRT tĩnh, rất mờ. */
 @Composable
 fun ScanlineOverlay(modifier: Modifier = Modifier) {
     Canvas(modifier = modifier.fillMaxSize()) {
@@ -70,7 +58,7 @@ fun ScanlineOverlay(modifier: Modifier = Modifier) {
         var y = 0f
         while (y < size.height) {
             drawLine(
-                color = Color.White.copy(alpha = 0.025f),
+                color = Color.White.copy(alpha = 0.02f),
                 start = Offset(0f, y),
                 end = Offset(size.width, y),
                 strokeWidth = 1f
@@ -78,4 +66,328 @@ fun ScanlineOverlay(modifier: Modifier = Modifier) {
             y += lineSpacing
         }
     }
+}
+
+/** 
+ * Lớp phủ nhiễu tĩnh động (Integrity Static Overlay) theo tiến trình của case.
+ * Khi tiến trình của người chơi càng tăng, độ quét CRT càng đậm và thỉnh thoảng có chớp giật màn hình (glitch).
+ */
+@Composable
+fun IntegrityStaticOverlay(
+    modifier: Modifier = Modifier
+) {
+    val progressState by GameStateRepository.progress.collectAsState()
+    val totalFacts = remember { GameStateRepository.getTotalFactCount() }
+    val collectedFacts = progressState.collectedFactIds.size
+    val progressFraction = if (totalFacts > 0) collectedFacts.toFloat() / totalFacts.toFloat() else 0f
+
+    // Cường độ scanline thay đổi từ 4% đến 9% theo GDD
+    val scanlineAlpha = 0.04f + (progressFraction * 0.05f)
+
+    var isGlitching by remember { mutableStateOf(false) }
+
+    LaunchedEffect(progressFraction) {
+        if (progressFraction == 0f) return@LaunchedEffect
+        while (true) {
+            // Tần suất nhiễu tăng dần khi tiến trình lớn hơn. Chờ từ 0.5s đến 5s.
+            val delayMs = (5000 - (progressFraction * 4500)).toLong().coerceAtLeast(500)
+            delay(delayMs)
+
+            // Khả năng giật màn hình
+            if (Math.random() < 0.2 + (progressFraction * 0.5)) {
+                isGlitching = true
+                delay(80) // Thời gian giật nhấp nháy 80ms theo thiết kế
+                isGlitching = false
+            }
+        }
+    }
+
+    Box(modifier = modifier.fillMaxSize()) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val lineSpacing = 4.dp.toPx()
+            var y = 0f
+            while (y < size.height) {
+                drawLine(
+                    color = Color.White.copy(alpha = scanlineAlpha),
+                    start = Offset(0f, y),
+                    end = Offset(size.width, y),
+                    strokeWidth = 1f
+                )
+                y += lineSpacing
+            }
+
+            // Vẽ thêm các chấm/sọc xanh ngẫu nhiên để mô phỏng dữ liệu nhiễu NEXUS
+            if (progressFraction > 0.2f) {
+                val noiseCount = (progressFraction * 12).toInt()
+                for (i in 0 until noiseCount) {
+                    val lineY = (Math.random() * size.height).toFloat()
+                    val lineX = (Math.random() * size.width).toFloat()
+                    val lineWidth = (5 + Math.random() * 30).toFloat()
+                    drawLine(
+                        color = AccentTerminal.copy(alpha = 0.04f * progressFraction),
+                        start = Offset(lineX, lineY),
+                        end = Offset(lineX + lineWidth, lineY),
+                        strokeWidth = 1f
+                    )
+                }
+            }
+        }
+
+        // Chớp màn hình xanh nhẹ mô phỏng glitch
+        if (isGlitching) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(AccentTerminal.copy(alpha = 0.05f))
+            )
+        }
+    }
+}
+
+/** Hiệu ứng máy đánh chữ (Typewriter Text) hỗ trợ tắt animation (Reduced Motion). */
+@Composable
+fun TypewriterText(
+    text: String,
+    modifier: Modifier = Modifier,
+    color: Color = Color.Unspecified,
+    style: TextStyle = LocalTextStyle.current,
+    speedMs: Long = 14,
+    onComplete: () -> Unit = {}
+) {
+    val context = LocalContext.current
+    val isReducedMotion = remember {
+        try {
+            val scale = Settings.Global.getFloat(
+                context.contentResolver,
+                Settings.Global.ANIMATOR_DURATION_SCALE,
+                1f
+            )
+            scale == 0f
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    var visibleText by remember(text) { mutableStateOf("") }
+
+    LaunchedEffect(text) {
+        if (isReducedMotion) {
+            visibleText = text
+            onComplete()
+        } else {
+            visibleText = ""
+            for (i in 1..text.length) {
+                delay(speedMs)
+                visibleText = text.substring(0, i)
+            }
+            onComplete()
+        }
+    }
+
+    Text(
+        text = visibleText,
+        modifier = modifier,
+        color = color,
+        style = style
+    )
+}
+
+/** 
+ * Hộp ngoặc nhọn Bracket Card -- Component cốt lõi thay thế cho Card thông thường.
+ * Có 4 ký tự ┌ ┐ └ ┘ được đặt tuyệt đối tại 4 góc. Nền tự sáng lên và đổi màu góc khi được chọn/focus.
+ */
+@Composable
+fun BracketCard(
+    modifier: Modifier = Modifier,
+    isFocused: Boolean = false,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    val borderColor = if (isFocused) BorderActive else BorderAscii
+    val backgroundColor = if (isFocused) BgSurfaceRaised else BgSurface
+
+    Box(
+        modifier = modifier
+            .background(backgroundColor)
+            .border(BorderStroke(1.dp, borderColor))
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            content = content
+        )
+
+        val cornerColor = if (isFocused) AccentTerminal else TextMuted
+        
+        // Vẽ góc ┌ ┐ └ ┘
+        Text(
+            "┌",
+            color = cornerColor,
+            fontSize = 9.sp,
+            fontFamily = FontFamily.Monospace,
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(top = 1.dp, start = 3.dp)
+        )
+        Text(
+            "┐",
+            color = cornerColor,
+            fontSize = 9.sp,
+            fontFamily = FontFamily.Monospace,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(top = 1.dp, end = 3.dp)
+        )
+        Text(
+            "└",
+            color = cornerColor,
+            fontSize = 9.sp,
+            fontFamily = FontFamily.Monospace,
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(bottom = 1.dp, start = 3.dp)
+        )
+        Text(
+            "┘",
+            color = cornerColor,
+            fontSize = 9.sp,
+            fontFamily = FontFamily.Monospace,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(bottom = 1.dp, end = 3.dp)
+        )
+    }
+}
+
+/** Address bar hiển thị đường dẫn và trạng thái kết nối. */
+@Composable
+fun AddressBar(
+    command: String,
+    modifier: Modifier = Modifier,
+    isVerified: Boolean = true
+) {
+    val statusColor = if (isVerified) AccentTerminal else AccentAmber
+    val statusText = if (isVerified) "[CONNECTED]" else "[UNVERIFIED]"
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(BgSurface)
+            .border(BorderStroke(1.dp, BorderAscii))
+            .padding(horizontal = 12.dp, vertical = 10.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    "> ",
+                    color = AccentTerminal,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    command,
+                    color = TextPrimary,
+                    style = MaterialTheme.typography.bodyMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            Text(
+                statusText,
+                color = statusColor,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
+}
+
+/** Nút Terminal viền mảnh rỗng ruột (outlined only), phản hồi chạm đổi màu nền nhẹ. */
+@Composable
+fun TerminalButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    isAmber: Boolean = false
+) {
+    val color = when {
+        !enabled -> TextMuted
+        isAmber -> AccentAmber
+        else -> AccentTerminal
+    }
+
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val backgroundColor = if (isPressed && enabled) color.copy(alpha = 0.08f) else Color.Transparent
+
+    Box(
+        modifier = modifier
+            .height(52.dp)
+            .background(backgroundColor)
+            .border(BorderStroke(1.dp, color))
+            .clickable(
+                enabled = enabled,
+                interactionSource = interactionSource,
+                indication = null, // Triệt tiêu hiệu ứng bong bóng Material
+                onClick = onClick
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text,
+            color = color,
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
+
+/** Nhãn trạng thái viền mảnh 1dp. */
+@Composable
+fun StatusTag(
+    text: String,
+    modifier: Modifier = Modifier,
+    color: Color = AccentTerminal
+) {
+    Box(
+        modifier = modifier
+            .border(BorderStroke(1.dp, color))
+            .padding(horizontal = 6.dp, vertical = 2.dp)
+    ) {
+        Text(
+            text = text.uppercase(),
+            color = color,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
+
+/** Thanh tiến trình ASCII [████░░░] */
+@Composable
+fun AsciiProgressBar(
+    progress: Float,
+    modifier: Modifier = Modifier,
+    totalBlocks: Int = 10
+) {
+    val filled = (progress * totalBlocks).toInt().coerceIn(0, totalBlocks)
+    val empty = totalBlocks - filled
+    val bar = "█".repeat(filled) + "░".repeat(empty)
+
+    Text(
+        text = "[$bar] ${(progress * 100).toInt()}%",
+        color = AccentTerminal,
+        style = MaterialTheme.typography.bodyMedium,
+        fontFamily = FontFamily.Monospace,
+        fontWeight = FontWeight.Bold,
+        modifier = modifier
+    )
 }

@@ -1,13 +1,11 @@
 package com.example.internet_explorer.app.navigation
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,13 +25,14 @@ import com.example.internet_explorer.app.feature.inbox.InboxScreen
 import com.example.internet_explorer.app.feature.notebook.NotebookScreen
 import com.example.internet_explorer.app.feature.puzzle.PuzzleScreen
 import com.example.internet_explorer.app.ui.components.BlinkingCursor
-import com.example.internet_explorer.app.ui.components.ScanlineOverlay
+import com.example.internet_explorer.app.ui.components.IntegrityStaticOverlay
+import com.example.internet_explorer.app.ui.theme.*
 
-private sealed class BottomNavItem(val route: String, val label: String, val emoji: String) {
-    data object Home : BottomNavItem("home", "Browser", "🌐")
-    data object Notebook : BottomNavItem("notebook", "Notebook", "📓")
-    data object Puzzle : BottomNavItem("puzzle", "Puzzle", "🧩")
-    data object Inbox : BottomNavItem("inbox", "Inbox", "📧")
+private sealed class BottomNavItem(val route: String, val label: String) {
+    data object Home : BottomNavItem("home", "Browser")
+    data object Notebook : BottomNavItem("notebook", "Notebook")
+    data object Puzzle : BottomNavItem("puzzle", "Puzzle")
+    data object Inbox : BottomNavItem("inbox", "Inbox")
 }
 
 private val bottomItems = listOf(
@@ -43,14 +42,6 @@ private val bottomItems = listOf(
     BottomNavItem.Inbox
 )
 
-/**
- * NavGraph đầy đủ cho core loop (mục 5 GDD):
- * Home (danh sách website) -> mở 1 website -> Notebook xem manh mối
- * -> Puzzle giải log -> unlock clue -> quay lại Notebook -> Inbox đọc email secret mới mở.
- *
- * Bottom bar chỉ hiện ở 4 route cấp cao nhất, tự ẩn khi đang xem chi tiết 1 website
- * (route "browser/{entityId}") để có cảm giác "đang đọc trang", giống hành vi trình duyệt thật.
- */
 @Composable
 fun AppNavGraph(navController: NavHostController = rememberNavController()) {
     val backStackEntry by navController.currentBackStackEntryAsState()
@@ -62,13 +53,22 @@ fun AppNavGraph(navController: NavHostController = rememberNavController()) {
                 Row(
                     Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                        .background(BgSurface)
+                        .border(BorderStroke(1.dp, BorderAscii))
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        "🟢 NEXUS-7 CONNECTED",
+                        text = "🟢 SYSTEM ONLINE // LEVEL: UNVERIFIED",
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.primary,
+                        color = AccentTerminal,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(Modifier.weight(1f))
+                    Text(
+                        text = "NEXUS-7",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = AccentTerminal,
                         fontWeight = FontWeight.Bold
                     )
                     BlinkingCursor(modifier = Modifier.padding(start = 4.dp))
@@ -76,20 +76,48 @@ fun AppNavGraph(navController: NavHostController = rememberNavController()) {
             },
             bottomBar = {
                 if (bottomItems.any { it.route == currentRoute }) {
-                    NavigationBar {
-                        bottomItems.forEach { item ->
-                            NavigationBarItem(
-                                selected = currentRoute == item.route,
-                                onClick = {
-                                    navController.navigate(item.route) {
-                                        popUpTo(navController.graph.startDestinationId) { saveState = true }
-                                        launchSingleTop = true
-                                        restoreState = true
-                                    }
-                                },
-                                icon = { Text(item.emoji) },
-                                label = { Text(item.label) }
-                            )
+                    // Custom Bottom Navigation Bar phẳng theo GDD mục 12 & 8
+                    Column {
+                        // Đường viền ngăn cách phía trên của Bottom Bar
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(1.dp)
+                                .background(BorderAscii)
+                        )
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(56.dp)
+                                .background(BgSurface),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            bottomItems.forEach { item ->
+                                val selected = currentRoute == item.route
+                                val color = if (selected) AccentTerminal else TextMuted
+                                val textLabel = if (selected) "[ ${item.label.toUpperCase()} ]" else "  ${item.label.toUpperCase()}  "
+
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .fillMaxHeight()
+                                        .clickable {
+                                            navController.navigate(item.route) {
+                                                popUpTo(navController.graph.startDestinationId) { saveState = true }
+                                                launchSingleTop = true
+                                                restoreState = true
+                                            }
+                                        },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = textLabel,
+                                        color = color,
+                                        style = MaterialTheme.typography.labelLarge,
+                                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -121,8 +149,7 @@ fun AppNavGraph(navController: NavHostController = rememberNavController()) {
             }
         }
 
-        // Hiệu ứng quét CRT phủ toàn màn hình, vẽ sau cùng để nằm trên mọi nội dung.
-        // Không chặn thao tác chạm vì Canvas không có modifier clickable/pointerInput.
-        ScanlineOverlay(modifier = Modifier.fillMaxSize())
+        // Tích hợp Lớp phủ quét CRT động & chớp glitch tăng dần theo tiến độ điều tra
+        IntegrityStaticOverlay(modifier = Modifier.fillMaxSize())
     }
 }

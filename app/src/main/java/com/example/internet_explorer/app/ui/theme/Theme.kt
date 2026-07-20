@@ -8,21 +8,21 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
 
 private val InternetExplorerColorScheme = darkColorScheme(
-    primary = AccentGreen,
-    onPrimary = BackgroundDark,
-    primaryContainer = AccentGreenContainer,
-    onPrimaryContainer = AccentGreen,
+    primary = AccentTerminal,
+    onPrimary = BgPrimary,
+    primaryContainer = BgSurface,
+    onPrimaryContainer = AccentTerminal,
     secondary = AccentAmber,
-    onSecondary = BackgroundDark,
-    background = BackgroundDark,
+    onSecondary = BgPrimary,
+    background = BgPrimary,
     onBackground = TextPrimary,
-    surface = SurfaceDark,
+    surface = BgSurface,
     onSurface = TextPrimary,
-    surfaceVariant = SurfaceVariantDark,
-    onSurfaceVariant = TextSecondary,
-    outline = OutlineDark,
-    error = ErrorRed,
-    onError = BackgroundDark
+    surfaceVariant = BgSurfaceRaised,
+    onSurfaceVariant = TextNoise,
+    outline = BorderAscii,
+    error = AccentGlitch,
+    onError = BgPrimary
 )
 
 // Góc gần vuông cho MỌI component mặc định (Button, Card, NavigationBar...) --
