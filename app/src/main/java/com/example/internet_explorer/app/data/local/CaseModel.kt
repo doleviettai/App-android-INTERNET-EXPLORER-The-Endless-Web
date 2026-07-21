@@ -54,13 +54,20 @@ data class NpcDialogueJson(
 // `content` giữ nguyên dạng JsonElement thô -- giống hệt cách WebsiteEntity.contentJson
 // được lưu ở backend (mục 13.3.2 GDD). Parse cụ thể theo layoutType chỉ khi cần render,
 // không parse trước ở tầng loader.
+//
+// decayAfterStep (gameplay-mechanics-phase2.md mục 4): số "step" trong case, không phải
+// thời gian thật -- null nghĩa là site không bao giờ decay. Luôn khai báo tường minh
+// "decayAfterStep": null trong JSON cho site không decay (không bỏ trống field), đúng
+// pattern đã dùng cho unlockCondition ở EmailJson để tránh phụ thuộc hành vi Gson với
+// field bị thiếu hẳn.
 data class WebsiteJson(
     val id: String,
     val layoutType: String,
     val organizationId: String,
     val url: String,
     val content: JsonElement,
-    val revealedFactIds: List<String>
+    val revealedFactIds: List<String>,
+    val decayAfterStep: Int? = null
 )
 
 data class PortfolioContent(

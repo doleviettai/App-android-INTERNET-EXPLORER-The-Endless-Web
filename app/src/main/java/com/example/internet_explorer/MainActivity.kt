@@ -3,11 +3,13 @@ package com.example.internet_explorer
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.example.internet_explorer.app.data.repository.GameStateRepository
+import com.example.internet_explorer.app.feature.cleanup.CleanupScreen
 import com.example.internet_explorer.app.feature.onboarding.OnboardingPreferences
 import com.example.internet_explorer.app.feature.onboarding.OnboardingScreen
 import com.example.internet_explorer.app.navigation.AppNavGraph
@@ -25,18 +27,18 @@ class MainActivity : ComponentActivity() {
                 var showOnboarding by remember {
                     mutableStateOf(!OnboardingPreferences.hasCompletedOnboarding(applicationContext))
                 }
+                // Trace ngưỡng nguy hiểm (gameplay-mechanics-phase2.md) -- khi true, CHẶN
+                // TOÀN APP bằng CleanupScreen bất kể đang ở route nào trong AppNavGraph.
+                val isLockedOut by GameStateRepository.isLockedOut.collectAsState()
 
-                if (showBoot) {
-                    BootSequenceScreen(onFinished = {
-                        showBoot = false
-                    })
-                } else if (showOnboarding) {
-                    OnboardingScreen(onFinished = {
+                when {
+                    showBoot -> BootSequenceScreen(onFinished = { showBoot = false })
+                    showOnboarding -> OnboardingScreen(onFinished = {
                         OnboardingPreferences.setCompleted(applicationContext)
                         showOnboarding = false
                     })
-                } else {
-                    AppNavGraph()
+                    isLockedOut -> CleanupScreen()
+                    else -> AppNavGraph()
                 }
             }
         }

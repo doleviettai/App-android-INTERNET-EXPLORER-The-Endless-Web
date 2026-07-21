@@ -68,18 +68,25 @@ fun ScanlineOverlay(modifier: Modifier = Modifier) {
     }
 }
 
-/** 
- * Lớp phủ nhiễu tĩnh động (Integrity Static Overlay) theo tiến trình của case.
- * Khi tiến trình của người chơi càng tăng, độ quét CRT càng đậm và thỉnh thoảng có chớp giật màn hình (glitch).
+/**
+ * Lớp phủ nhiễu tĩnh động (Integrity Static Overlay) theo tiến trình của case
+ * VÀ Trace Meter (gameplay-mechanics-phase2.md mục 0, 2.4) -- 2 nguồn input,
+ * cường độ cuối cùng lấy giá trị LỚN HƠN giữa 2 bên (khớp GameStateRepository.currentStaticIntensity()).
+ * Khi tiến trình/Trace càng tăng, độ quét CRT càng đậm và thỉnh thoảng có chớp giật màn hình (glitch).
  */
 @Composable
 fun IntegrityStaticOverlay(
     modifier: Modifier = Modifier
 ) {
     val progressState by GameStateRepository.progress.collectAsState()
+    val traceLevel by GameStateRepository.traceLevel.collectAsState()
     val totalFacts = remember { GameStateRepository.getTotalFactCount() }
     val collectedFacts = progressState.collectedFactIds.size
-    val progressFraction = if (totalFacts > 0) collectedFacts.toFloat() / totalFacts.toFloat() else 0f
+    val caseProgressFraction = if (totalFacts > 0) collectedFacts.toFloat() / totalFacts.toFloat() else 0f
+
+    // Nguồn thứ 2 (Trace): NEXUS phản ứng nhanh hơn khi người chơi "gây tiếng",
+    // không chỉ khi tiến độ case tăng tự nhiên.
+    val progressFraction = maxOf(caseProgressFraction, traceLevel)
 
     // Cường độ scanline thay đổi từ 4% đến 9% theo GDD
     val scanlineAlpha = 0.04f + (progressFraction * 0.05f)
@@ -192,7 +199,7 @@ fun TypewriterText(
     )
 }
 
-/** 
+/**
  * Hộp ngoặc nhọn Bracket Card -- Component cốt lõi thay thế cho Card thông thường.
  * Có 4 ký tự ┌ ┐ └ ┘ được đặt tuyệt đối tại 4 góc. Nền tự sáng lên và đổi màu góc khi được chọn/focus.
  */
@@ -218,7 +225,7 @@ fun BracketCard(
         )
 
         val cornerColor = if (isFocused) AccentTerminal else TextMuted
-        
+
         // Vẽ góc ┌ ┐ └ ┘
         Text(
             "┌",
@@ -259,7 +266,14 @@ fun BracketCard(
     }
 }
 
-/** Address bar hiển thị đường dẫn và trạng thái kết nối. */
+/**
+ * Address bar hiển thị đường dẫn và trạng thái kết nối.
+ * Thêm dòng Trace Meter (gameplay-mechanics-phase2.md mục 2.4) -- KHÔNG hiện số Trace
+ * trực tiếp (phá Diegetic UI), chỉ hiện tag [CONNECTION FLAGGED] khi traceLevel >= 0.3,
+ * leo màu accent.amber -> accent.glitch ở mức >= 0.6. Tự đọc GameStateRepository.traceLevel
+ * ngay trong component (giống cách IntegrityStaticOverlay đã tự đọc progress) nên mọi nơi
+ * gọi AddressBar hiện có không cần đổi tham số gì.
+ */
 @Composable
 fun AddressBar(
     command: String,
@@ -269,6 +283,11 @@ fun AddressBar(
     val statusColor = if (isVerified) AccentTerminal else AccentAmber
     val statusText = if (isVerified) "[CONNECTED]" else "[UNVERIFIED]"
 
+    val traceLevel by GameStateRepository.traceLevel.collectAsState()
+    val isFlagged = traceLevel >= 0.3f
+    val isDangerFlagged = traceLevel >= 0.6f
+    val flagColor = if (isDangerFlagged) AccentGlitch else AccentAmber
+
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -276,35 +295,47 @@ fun AddressBar(
             .border(BorderStroke(1.dp, BorderAscii))
             .padding(horizontal = 12.dp, vertical = 10.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
             Row(
+                modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.weight(1f)
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(
+                        "> ",
+                        color = AccentTerminal,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        command,
+                        color = TextPrimary,
+                        style = MaterialTheme.typography.bodyMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
                 Text(
-                    "> ",
-                    color = AccentTerminal,
-                    style = MaterialTheme.typography.bodyMedium,
+                    statusText,
+                    color = statusColor,
+                    style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Bold
                 )
+            }
+
+            if (isFlagged) {
+                Spacer(Modifier.height(4.dp))
                 Text(
-                    command,
-                    color = TextPrimary,
-                    style = MaterialTheme.typography.bodyMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    "[CONNECTION FLAGGED]",
+                    color = flagColor,
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold
                 )
             }
-            Text(
-                statusText,
-                color = statusColor,
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Bold
-            )
         }
     }
 }
@@ -390,4 +421,37 @@ fun AsciiProgressBar(
         fontWeight = FontWeight.Bold,
         modifier = modifier
     )
+}
+
+/**
+ * Empty state kiểu system message (design-system.md mục 8) -- dùng cho danh sách rỗng
+ * VÀ cho site đã bị Site Decay xóa nội dung ("[ARCHIVED BY NEXUS]"). Không có mascot/hình vẽ,
+ * chỉ chữ, đúng tinh thần forensic/lạnh lùng của toàn app.
+ */
+@Composable
+fun EmptyState(
+    message: String,
+    modifier: Modifier = Modifier,
+    flavorText: String? = null
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = message,
+            color = TextMutedReadable,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Bold,
+            fontFamily = FontFamily.Monospace
+        )
+        if (flavorText != null) {
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = flavorText,
+                color = TextMuted,
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
+    }
 }

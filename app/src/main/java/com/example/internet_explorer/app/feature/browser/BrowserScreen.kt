@@ -22,7 +22,9 @@ import com.example.internet_explorer.app.data.local.WebsiteContent
 import com.example.internet_explorer.app.data.local.WikiContent
 import com.example.internet_explorer.app.ui.components.AddressBar
 import com.example.internet_explorer.app.ui.components.BracketCard
+import com.example.internet_explorer.app.ui.components.EmptyState
 import com.example.internet_explorer.app.ui.components.StatusTag
+import com.example.internet_explorer.app.ui.components.TerminalButton
 import com.example.internet_explorer.app.ui.components.TypewriterText
 import com.example.internet_explorer.app.ui.theme.*
 
@@ -56,6 +58,18 @@ fun BrowserScreen(
                     )
                 }
             }
+            is BrowserUiState.Decayed -> {
+                Column(Modifier.fillMaxSize()) {
+                    AddressBar(command = state.website.url, isVerified = false)
+                    Spacer(Modifier.height(32.dp))
+                    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        EmptyState(
+                            message = "[ARCHIVED BY NEXUS]",
+                            flavorText = "Nội dung đã bị xóa khỏi hệ thống. Không thể khôi phục."
+                        )
+                    }
+                }
+            }
             is BrowserUiState.Success -> {
                 Column(
                     Modifier
@@ -67,6 +81,14 @@ fun BrowserScreen(
                         command = state.website.url,
                         isVerified = state.website.id == "site_social" || state.website.id == "site_forum"
                     )
+
+                    // Site Decay (gameplay-mechanics-phase2.md mục 4.4): cảnh báo âm thầm,
+                    // không đồng hồ đếm ngược lộ liễu -- chỉ 1 tag khi còn 1-2 step trước decay.
+                    if (state.isUnstable) {
+                        Spacer(Modifier.height(8.dp))
+                        StatusTag(text = "[INDEX: UNSTABLE]", color = AccentAmber)
+                    }
+
                     Spacer(Modifier.height(16.dp))
 
                     when (val content = state.content) {
@@ -74,6 +96,20 @@ fun BrowserScreen(
                         is WebsiteContent.Wiki -> WikiView(content.data)
                         is WebsiteContent.Forum -> ForumView(content.data)
                         is WebsiteContent.Social -> SocialView(content.data)
+                    }
+
+                    // Chỉ site có nguy cơ decay (decayAfterStep != null) mới cần nút lưu.
+                    if (state.website.decayAfterStep != null) {
+                        Spacer(Modifier.height(16.dp))
+                        if (state.isArchived) {
+                            StatusTag(text = "✓ ĐÃ LƯU VÀO NOTEBOOK", color = AccentTerminal)
+                        } else {
+                            TerminalButton(
+                                text = "[ LƯU VÀO NOTEBOOK ]",
+                                onClick = { viewModel.archiveCurrentWebsite() },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
                     }
                 }
             }
